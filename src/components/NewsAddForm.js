@@ -1,63 +1,39 @@
-import React, { Component } from "react";
+import React, { Component, createRef } from "react";
 import PropTypes from "prop-types";
 import { nanoid } from "nanoid";
 import { TAGS } from "../data/myData";
-import { AUTHORS } from "../data/myData";
 
 export class NewsAddForm extends Component {
-  state = {
-    title: "",
-    text: "",
-    description: "",
-    photo: null,
-    author: AUTHORS[0].name,
-    hashTags: [],
-  };
+  titleEl = createRef();
+  textEl = createRef();
+  descriptionEl = createRef();
+  photoEl = createRef();
+  authorEl = createRef();
+  hashTagsElements = [];
 
   handleFormSubmit = (e) => {
     e.preventDefault();
+
     const id = nanoid(15);
-    let createdNews = { id, ...this.state };
-    this.props.addNews(createdNews);
-  };
-
-  handleChangeText = (e) => {
-    let { name, value } = e.currentTarget;
-    this.setState({
-      [name]: value,
+    const hashTagsChooses = this.hashTagsElements.filter((el) => {
+      return el.checked;
     });
-  };
 
-  handleChangePhoto = (event) => {
-    if (event.target.files && event.target.files[0]) {
-      this.setState({
-        photo: URL.createObjectURL(event.target.files[0]),
-      });
-    }
-  };
+    let createdNews = {
+      id,
+      title: this.titleEl.current.value,
+      description: this.descriptionEl.current.value,
+      text: this.textEl.current.value,
+      photo: this.photoEl.current.files[0] || null,
+      hashTags: hashTagsChooses.map((item) => item.name),
+    };
 
-  handleChangeAuthor = (e) => {
-    this.setState({
-      author: e.currentTarget.value,
-    });
-  };
-
-  handleChangeTag = (e) => {
-    if (this.state.hashTags.indexOf(e.currentTarget.value) === -1) {
-      this.setState({
-        hashTags: [...this.state.hashTags, e.currentTarget.value],
-      });
-    } else {
-      this.setState({
-        hashTags: this.state.hashTags.filter((el) => {
-          return el !== e.currentTarget.value;
-        }),
-      });
-    }
+    console.log(createdNews);
   };
 
   render() {
-    const { title, text, description, photo, hashTags } = this.state;
+    const { photo } = this.props;
+
     return (
       <div className="addNews">
         <h2>Add some news: </h2>
@@ -65,11 +41,10 @@ export class NewsAddForm extends Component {
           <div className="addNews__title">
             <label htmlFor="addTitle">News title: </label>
             <input
-              onChange={this.handleChangeText}
+              ref={this.titleEl}
               className="addTitle"
               required="required"
               id="addTitle"
-              value={title}
               name="title"
               placeholder="Enter news name"
             />
@@ -78,11 +53,10 @@ export class NewsAddForm extends Component {
           <div className="addNews__description">
             <label htmlFor="addTitle">News description: </label>
             <input
-              onChange={this.handleChangeText}
+              ref={this.descriptionEl}
               className="addDescription"
               required="required"
               id="addDescription"
-              value={description}
               name="description"
               placeholder="Enter news description"
             />
@@ -91,9 +65,8 @@ export class NewsAddForm extends Component {
           <div className="addNews__text">
             <label htmlFor="addText">News text: </label>
             <textarea
-              onChange={this.handleChangeText}
+              ref={this.textEl}
               name="text"
-              value={text}
               required="required"
               className="addText"
               id="addText"
@@ -105,11 +78,12 @@ export class NewsAddForm extends Component {
             <label htmlFor="addPhoto">News photo: </label>
             <input
               type="file"
-              onChange={this.handleChangePhoto}
               className="addPhoto"
               id="addPhoto"
+              ref={this.photoEl}
               accept="image/*"
             />
+
             {photo && (
               <img
                 className="newsPage__photo"
@@ -124,25 +98,6 @@ export class NewsAddForm extends Component {
             )}
           </div>
 
-          <div className="newsPage__addAuthors">
-            <span>
-              <b>Authors: </b>
-            </span>
-            {AUTHORS.map((person) => {
-              return (
-                <label key={person.name} style={{ marginRight: "10px" }}>
-                  <span>{person.name}</span>
-                  <input
-                    onChange={this.handleChangeAuthor}
-                    type="radio"
-                    value={person.name}
-                    checked={this.state.author === person.name}
-                  ></input>
-                </label>
-              );
-            })}
-          </div>
-
           <div className="newsPage__addTags">
             <span>
               <b>Tags: </b>
@@ -153,9 +108,10 @@ export class NewsAddForm extends Component {
                   <span>{tagEl.name}</span>
                   <input
                     type="checkbox"
-                    value={tagEl.name}
-                    checked={hashTags.indexOf(tagEl.name) !== -1}
-                    onChange={this.handleChangeTag}
+                    name={tagEl.name}
+                    ref={(node) => {
+                      this.hashTagsElements.push(node);
+                    }}
                   />
                 </label>
               );
@@ -176,14 +132,10 @@ export class NewsAddForm extends Component {
 }
 
 NewsAddForm.propTypes = {
-  title: PropTypes.string.isRequired,
-  text: PropTypes.string.isRequired,
-  description: PropTypes.string.isRequired,
   photo: PropTypes.string,
-  author: PropTypes.string,
-  hashTags: PropTypes.arrayOf(PropTypes.string),
 };
 
 NewsAddForm.defaultProps = {
   hashTags: [],
+  photo: null,
 };
